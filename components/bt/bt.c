@@ -30,7 +30,7 @@
 #include "esp_types.h"
 #include "esp_system.h"
 #include "esp_task.h"
-#include "esp_intr.h"
+#include "esp_intr_alloc.h"
 #include "esp_attr.h"
 #include "esp_phy_init.h"
 #include "esp_bt.h"
@@ -42,7 +42,7 @@
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "soc/soc_memory_layout.h"
-#include "esp_clk.h"
+#include "esp32/clk.h"
 #include "esp_coexist_internal.h"
 
 

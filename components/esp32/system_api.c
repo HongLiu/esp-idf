@@ -17,12 +17,12 @@
 #include "esp_system.h"
 #include "esp_attr.h"
 #include "esp_wifi.h"
-#include "esp_wifi_internal.h"
+#include "esp_private/wifi.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "rom/efuse.h"
-#include "rom/cache.h"
-#include "rom/uart.h"
+#include "esp32/rom/efuse.h"
+#include "esp32/rom/cache.h"
+#include "esp32/rom/uart.h"
 #include "soc/dport_reg.h"
 #include "soc/gpio_reg.h"
 #include "soc/efuse_reg.h"
@@ -36,7 +36,7 @@
 #include "freertos/task.h"
 #include "freertos/xtensa_api.h"
 #include "esp_heap_caps.h"
-#include "esp_system_internal.h"
+#include "esp_private/system_internal.h"
 #include "esp_efuse.h"
 #include "esp_efuse_table.h"
 
@@ -211,14 +211,26 @@ esp_err_t esp_read_mac(uint8_t* mac, esp_mac_type_t type)
 
 esp_err_t esp_register_shutdown_handler(shutdown_handler_t handler)
 {
-     int i;
-     for (i = 0; i < SHUTDOWN_HANDLERS_NO; i++) {
-	  if (shutdown_handlers[i] == NULL) {
-	       shutdown_handlers[i] = handler;
-	       return ESP_OK;
-	  }
-     }
-     return ESP_FAIL;
+    for (int i = 0; i < SHUTDOWN_HANDLERS_NO; i++) {
+        if (shutdown_handlers[i] == handler) {
+            return ESP_ERR_INVALID_STATE;
+        } else if (shutdown_handlers[i] == NULL) {
+            shutdown_handlers[i] = handler;
+            return ESP_OK;
+        }
+    }
+    return ESP_ERR_NO_MEM;
+}
+
+esp_err_t esp_unregister_shutdown_handler(shutdown_handler_t handler)
+{
+    for (int i = 0; i < SHUTDOWN_HANDLERS_NO; i++) {
+        if (shutdown_handlers[i] == handler) {
+            shutdown_handlers[i] = NULL;
+            return ESP_OK;
+        }
+    }
+    return ESP_ERR_INVALID_STATE;
 }
 
 void esp_restart_noos() __attribute__ ((noreturn));

@@ -110,25 +110,22 @@ static void transport_simple_ble_read(esp_gatts_cb_event_t event, esp_gatt_if_t 
         ESP_LOGD(TAG, "Subsequent read request for attr value");
     }
 
-    esp_gatt_rsp_t *gatt_rsp = (esp_gatt_rsp_t *) malloc(sizeof(esp_gatt_rsp_t));
-    if (gatt_rsp != NULL) {
-        gatt_rsp->attr_value.len = MIN(read_len, (protoble_internal->gatt_mtu - 1));
-        if (read_len && read_buf) {
-            memcpy(gatt_rsp->attr_value.value,
-                   read_buf + param->read.offset,
-                   gatt_rsp->attr_value.len);
-        }
-        read_len -= gatt_rsp->attr_value.len;
-    } else {
-        ESP_LOGE(TAG, "%s, malloc failed", __func__);
-        return;
+    esp_gatt_rsp_t gatt_rsp = {0};
+    gatt_rsp.attr_value.len = MIN(read_len, (protoble_internal->gatt_mtu - 1));
+    gatt_rsp.attr_value.handle = param->read.handle;
+    gatt_rsp.attr_value.offset = param->read.offset;
+    gatt_rsp.attr_value.auth_req = ESP_GATT_AUTH_REQ_NONE;
+    if (gatt_rsp.attr_value.len && read_buf) {
+        memcpy(gatt_rsp.attr_value.value,
+                read_buf + param->read.offset,
+                gatt_rsp.attr_value.len);
     }
+    read_len -= gatt_rsp.attr_value.len;
     esp_err_t err = esp_ble_gatts_send_response(gatts_if, param->read.conn_id,
-                                                param->read.trans_id, status, gatt_rsp);
+                                                param->read.trans_id, status, &gatt_rsp);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Send response error in read");
     }
-    free(gatt_rsp);
 }
 
 static esp_err_t prepare_write_event_env(esp_gatt_if_t gatts_if,
@@ -157,22 +154,19 @@ static esp_err_t prepare_write_event_env(esp_gatt_if_t gatts_if,
     prepare_write_env.prepare_len += param->write.len;
     prepare_write_env.handle = param->write.handle;
     if (param->write.need_rsp) {
-        esp_gatt_rsp_t *gatt_rsp = (esp_gatt_rsp_t *) malloc(sizeof(esp_gatt_rsp_t));
-        if (gatt_rsp != NULL) {
-            gatt_rsp->attr_value.len = param->write.len;
-            gatt_rsp->attr_value.handle = param->write.handle;
-            gatt_rsp->attr_value.offset = param->write.offset;
-            gatt_rsp->attr_value.auth_req = ESP_GATT_AUTH_REQ_NONE;
-            memcpy(gatt_rsp->attr_value.value, param->write.value, param->write.len);
-            esp_err_t response_err = esp_ble_gatts_send_response(gatts_if, param->write.conn_id,
-                                                                 param->write.trans_id, status,
-                                                                 gatt_rsp);
-            if (response_err != ESP_OK) {
-                ESP_LOGE(TAG, "Send response error in prep write");
-            }
-            free(gatt_rsp);
-        } else {
-            ESP_LOGE(TAG, "%s, malloc failed", __func__);
+        esp_gatt_rsp_t gatt_rsp = {0};
+        gatt_rsp.attr_value.len = param->write.len;
+        gatt_rsp.attr_value.handle = param->write.handle;
+        gatt_rsp.attr_value.offset = param->write.offset;
+        gatt_rsp.attr_value.auth_req = ESP_GATT_AUTH_REQ_NONE;
+        if (gatt_rsp.attr_value.len && param->write.value) {
+            memcpy(gatt_rsp.attr_value.value, param->write.value, param->write.len);
+        }
+        esp_err_t response_err = esp_ble_gatts_send_response(gatts_if, param->write.conn_id,
+                param->write.trans_id, status,
+                &gatt_rsp);
+        if (response_err != ESP_OK) {
+            ESP_LOGE(TAG, "Send response error in prep write");
         }
     }
     if (status != ESP_GATT_OK) {
@@ -207,7 +201,7 @@ static void transport_simple_ble_write(esp_gatts_cb_event_t event, esp_gatt_if_t
 
     ret = protocomm_req_handle(protoble_internal->pc_ble,
                                handle_to_handler(param->write.handle),
-                               param->exec_write.conn_id,
+                               param->write.conn_id,
                                param->write.value,
                                param->write.len,
                                &outbuf, &outlen);
@@ -252,7 +246,7 @@ static void transport_simple_ble_exec_write(esp_gatts_cb_event_t event, esp_gatt
 
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Invalid content received, killing connection");
-            esp_ble_gatts_close(gatts_if, param->write.conn_id);
+            esp_ble_gatts_close(gatts_if, param->exec_write.conn_id);
         } else {
             hexdump("Response from exec write", outbuf, outlen);
             esp_ble_gatts_set_attr_value(prepare_write_env.handle, outlen, outbuf);

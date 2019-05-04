@@ -10,13 +10,14 @@ API 指南
    构建系统 (CMake) <build-system-cmake>
    错误处理 <error-handling>
    Fatal Errors <fatal-errors>
+   Event Handling <event-handling>
    Deep Sleep Wake Stubs <deep-sleep-stub>
    ESP32 Core Dump <core_dump>
    Flash Encryption <../security/flash-encryption>
    FreeRTOS SMP Changes <freertos-smp>
    Thread Local Storage <thread-local-storage>
    High Level Interrupts <hlinterrupts>
-   JTAG Debugging <jtag-debugging/index>
+   JTAG 调试 <jtag-debugging/index>
    Bootloader <bootloader>
    分区表 <partition-tables>
    Secure Boot <../security/secure-boot>
@@ -24,7 +25,7 @@ API 指南
    ULP Coprocessor (CMake) <ulp-cmake>
    单元测试 <unit-tests>
    单元测试 (CMake) <unit-tests-cmake>
-   Application Level Tracing <app_trace>
+   应用层跟踪 <app_trace>
    控制台终端组件 <console>
    ROM debug console <romconsole>
    RF Calibration <RF_calibration>

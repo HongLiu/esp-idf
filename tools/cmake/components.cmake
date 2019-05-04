@@ -17,6 +17,7 @@ endfunction()
 function(register_component)
     get_filename_component(component_dir ${CMAKE_CURRENT_LIST_FILE} DIRECTORY)
 
+    spaces2list(COMPONENT_SRCS)
     spaces2list(COMPONENT_SRCDIRS)
     spaces2list(COMPONENT_ADD_INCLUDEDIRS)
     spaces2list(COMPONENT_SRCEXCLUDE)
@@ -63,7 +64,7 @@ function(register_component)
 
         set_property(TARGET ${COMPONENT_TARGET} PROPERTY OUTPUT_NAME ${COMPONENT_NAME})
 
-        ldgen_generate_sections_info(${COMPONENT_TARGET})
+        ldgen_component_add(${COMPONENT_TARGET})
     else()
         add_library(${COMPONENT_TARGET} INTERFACE) # header-only component
         set(include_type INTERFACE)

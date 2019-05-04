@@ -17,7 +17,7 @@
 #include "esp_efuse_table.h"
 #include "stdlib.h"
 #include "esp_types.h"
-#include "rom/efuse.h"
+#include "esp32/rom/efuse.h"
 #include "assert.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -39,7 +39,7 @@ uint8_t esp_efuse_get_chip_ver(void)
 // Returns chip package from efuse
 uint32_t esp_efuse_get_pkg_ver(void)
 {
-    uint32_t pkg_ver;
+    uint32_t pkg_ver = 0;
     esp_efuse_read_field_blob(ESP_EFUSE_CHIP_VER_PKG, &pkg_ver, 3);
     return pkg_ver;
 }
